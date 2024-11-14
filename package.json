@@ -44,12 +44,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "start": "bun run react-scripts start",
+    "build": "bun run react-scripts build",
+    "test": "bun run react-scripts test"
   },
   "eslintConfig": {
     "extends": [
