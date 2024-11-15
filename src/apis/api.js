@@ -1,11 +1,17 @@
+// apis/api.js
 import axios from 'axios';
 import {getAccessTokenHeader, isTokenExpired, refreshToken, removeToken} from '../utils/TokenUtils';
 
-const API_BASE_URL = '/api';
-const AI_BASE_URL = '/ai';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+const AI_BASE_URL = process.env.REACT_APP_AI_URL;
 
 const createApiInstance = (baseURL) => {
-    const instance = axios.create({ baseURL });
+    const instance = axios.create({
+        baseURL,
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    });
 
     instance.interceptors.response.use(
         (response) => response,
@@ -44,4 +50,4 @@ const createApiInstance = (baseURL) => {
 export const api = createApiInstance(API_BASE_URL);
 export const aiApi = createApiInstance(AI_BASE_URL);
 
-export default api;  // 기본 export를 유지하여 기존 import 문을 깨지지 않게 합니다.
+export default api;
