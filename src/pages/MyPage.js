@@ -16,7 +16,7 @@ import {
     useDisclosure,
     useToast, Icon, Grid, GridItem, Box, Divider,
 } from "@chakra-ui/react";
-import BusinessInfoForm from "../component/BusinessInfoForm";
+import BusinessInfoForm from "../components/BusinessInfoForm";
 import "react-datepicker/dist/react-datepicker.css";
 import '../style/MyPage.css';
 import DatePicker from "react-datepicker";

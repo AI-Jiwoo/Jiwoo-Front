@@ -1,6 +1,6 @@
 import React from 'react';
 import { Element } from 'react-scroll';
-import MainHeader from '../component/common/MainHeader';
+import MainHeader from './/common/MainHeader';
 
 const ParentComponent = () => {
     return (

@@ -14,11 +14,11 @@ import {
     Heading, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Input
 } from '@chakra-ui/react';
 import { ChevronRightIcon, ChevronLeftIcon, ChatIcon, WarningIcon } from '@chakra-ui/icons';
-import MainHeader from '../component/common/MainHeader';
+import MainHeader from '../components/common/MainHeader';
 import MarketResearch from "./MarketResearch";
 import BusinessModel from "./BusinessModel";
-import SideNavigation from "../component/SideNavigation";
-import Footer from "../component/common/Footer";
+import SideNavigation from "../components/SideNavigation";
+import Footer from "../components/common/Footer";
 import Accounting from "./Accounting";
 import {motion , AnimatePresence} from "framer-motion";
 import {Link, useLocation, useNavigate} from 'react-router-dom';
@@ -28,9 +28,9 @@ import bannerImage from '../images/banner1.png';
 import bannerImage2 from '../images/banner2.png';
 import bannerImage3 from '../images/banner3.png';
 import bannerImage4 from '../images/banner4.png';
-import JiwooChatbot from "../component/Chatbot";
+import JiwooChatbot from "../components/Chatbot";
 import {Element, scroller} from "react-scroll";
-import SuccessStoriesSection from "../component/SuccessStoriesSection";
+import SuccessStoriesSection from "../components/SuccessStoriesSection";
 
 function MainPage() {
     const [currentSlide, setCurrentSlide] = useState(0);

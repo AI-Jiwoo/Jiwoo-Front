@@ -7,7 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
 import api from "../apis/api";
-import LoadingScreen from "../component/common/LoadingMotion";
+import LoadingScreen from "../components/common/LoadingMotion";
 
 const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
     const [selectedBusiness, setSelectedBusiness] = useState(null);

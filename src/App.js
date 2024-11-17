@@ -2,7 +2,7 @@ import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-import PageLayout from './component/common/PageLayout';
+import PageLayout from './components/common/PageLayout';
 import Home from './pages/Home';
 import Login from "./pages/Login";
 import Join from "./pages/Join";
@@ -10,9 +10,9 @@ import MainPage from "./pages/MainPage";
 import MyPage from "./pages/MyPage";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BusinessModel from "./pages/BusinessModel";
-import MainHeader from "./component/common/MainHeader";
-import MyPageLayout from "./component/common/MyPageLayout";
-import Chatbot from "./component/Chatbot";
+import MainHeader from "./components/common/MainHeader";
+import MyPageLayout from "./components/common/MyPageLayout";
+import Chatbot from "./components/Chatbot";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
