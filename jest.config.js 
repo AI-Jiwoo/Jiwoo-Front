@@ -1,0 +1,8 @@
+module.exports = {
+    testEnvironment: 'jsdom',
+    setupFilesAfterEnv: ['@testing-library/jest-dom'],
+    moduleDirectories: ['node_modules', 'src'],
+    transform: {
+        '^.+\\.(js|jsx)$': 'babel-jest',
+    }
+};

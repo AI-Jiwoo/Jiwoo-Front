@@ -26,8 +26,8 @@ import {
     InputRightElement,
     useToast, Alert, AlertIcon, AlertTitle, AlertDescription, FormHelperText,
 } from '@chakra-ui/react';
-import termsText from '../component/TextTerms';
-import privacyText from '../component/PrivacyText';
+import termsText from '../components/TextTerms';
+import privacyText from '../components/PrivacyText';
 import Confetti from 'react-confetti';
 import {useNavigate} from "react-router-dom";
 import axios from 'axios';

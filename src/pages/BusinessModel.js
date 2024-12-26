@@ -1,28 +1,21 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import React, { useCallback, useRef, useState } from 'react';
 import {
     VStack, HStack, Text, Button, Select, Input, Card, CardBody, CardHeader, Alert, AlertIcon,
-    List, ListItem, FormControl, FormLabel, Box, Spinner, Icon, SimpleGrid, Progress, Flex,
-    useBreakpointValue, Heading, UnorderedList, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
+    List, ListItem, FormControl, FormLabel, Box, Icon, SimpleGrid, Progress, Flex,
+    useBreakpointValue, Heading, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton
 } from '@chakra-ui/react';
 import { FaBusinessTime, FaChartLine, FaUsers, FaLightbulb, FaRedo, FaEye } from "react-icons/fa";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from "../apis/api";
-import LoadingScreen from "../component/common/LoadingMotion";
+import LoadingScreen from "../components/common/LoadingMotion";
 
 const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => {
+    const queryClient = useQueryClient();
     const [selectedBusiness, setSelectedBusiness] = useState(null);
-    const [businesses, setBusinesses] = useState([]);
-    const [similarServices, setSimilarServices] = useState([]);
-    const [analyzedBusinessModel, setAnalyzedBusinessModel] = useState(null);
-    const [businessProposal, setBusinessProposal] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [categories, setCategories] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const columnCount = useBreakpointValue({ base: 1, md: 2 });
     const businessModelRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(true);
 
     const businessModelMessages = [
         "비즈니스 모델을 분석 중입니다...",
@@ -33,68 +26,82 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         "JIWOO AI가 당신의 비즈니스 모델을 혁신하고 있어요!",
     ];
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setIsLoading(true);
-            try {
-                await fetchBusinesses();
-                await fetchCategories();
-            } catch (error) {
-                console.error("초기 데이터 로딩 실패:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchInitialData();
-    }, []);
-
-    useEffect(() => {
-        if (businessModelRef.current) {
-            businessModelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, []);
-
-    useEffect(() => {
-        console.log("Selected business updated:", selectedBusiness);
-    }, [selectedBusiness]);
-
-    const fetchBusinesses = async () => {
-        try {
+    // Queries
+    const { data: businesses = [], isError: isBusinessesError } = useQuery({
+        queryKey: ['businesses'],
+        queryFn: async () => {
             const response = await api.get('/business/user', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            setBusinesses(response.data.business || []);
-        } catch (error) {
-            handleError('사업 정보를 불러오는데 실패했습니다', error);
+            return response.data.business || [];
         }
-    };
+    });
 
-    const fetchCategories = async () => {
-        try {
+    const { data: categories = [], isError: isCategoriesError } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
             const response = await api.get('/category/names', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access-token')}` }
             });
-            setCategories(response.data || []);
-        } catch (error) {
-            handleError('카테고리 목록을 불러오는데 실패했습니다', error);
+            return response.data || [];
         }
-    };
+    });
+
+    // Mutations
+    const similarServicesMutation = useMutation({
+        mutationFn: async (data) => {
+            const headers = {
+                'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await api.post('/business-model/similar-services', data, { headers });
+            return response.data;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(['similarServices'], data);
+            setCurrentStep(2);
+        }
+    });
+
+    const analyzeBusinessModelMutation = useMutation({
+        mutationFn: async (similarServices) => {
+            const headers = {
+                'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await api.post('/business-model/analyze', similarServices, { headers });
+            return response.data;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(['analyzedBusinessModel'], data);
+            setCurrentStep(3);
+        }
+    });
+
+    const proposeBusinessModelMutation = useMutation({
+        mutationFn: async (analyzedBusinessModel) => {
+            const headers = {
+                'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await api.post('/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
+            return response.data;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(['businessProposal'], data);
+            setCurrentStep(4);
+        }
+    });
+
+    // Get cached data
+    const similarServices = queryClient.getQueryData(['similarServices']) || [];
+    const analyzedBusinessModel = queryClient.getQueryData(['analyzedBusinessModel']);
+    const businessProposal = queryClient.getQueryData(['businessProposal']);
 
     const getSimilarServices = async () => {
         if (!selectedBusiness && !customData?.category) {
-            setError('사업을 선택하거나 카테고리를 입력해주세요.');
             return;
         }
-
-        setLoading(true);  // 이 상태는 버튼의 로딩을 담당
-        setIsLoading(true);  // 이 상태는 전체 페이지 로딩 화면을 담당
-        setError(null);
-
-        const headers = {
-            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
-            'Content-Type': 'application/json'
-        };
 
         let data;
         if (selectedBusiness) {
@@ -117,66 +124,34 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             };
         }
 
-        try {
-            const response = await api.post('/business-model/similar-services', data, { headers });
-            setSimilarServices(response.data);  // 유사 서비스 설정
-            setCurrentStep(2);  // 다음 단계로 이동
-        } catch (error) {
-            handleError('유사 서비스 조회에 실패했습니다', error);
-        } finally {
-            setLoading(false);  // 버튼 로딩 해제
-            setIsLoading(false);  // 전체 로딩 화면 해제
-        }
+        await similarServicesMutation.mutateAsync(data);
     };
 
-
     const analyzeBusinessModels = async () => {
-        setLoading(true);
-        setIsLoading(true);
-        setError(null);
-
-        const headers = {
-            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
-            'Content-Type': 'application/json'
-        };
-
-        try {
-            const response = await api.post('/business-model/analyze', similarServices, { headers });
-            setAnalyzedBusinessModel(response.data);
-            setCurrentStep(3);
-        } catch (error) {
-            handleError('비즈니스 모델 분석에 실패했습니다', error);
-        } finally {
-            setLoading(false);
-            setIsLoading(false);
-        }
+        await analyzeBusinessModelMutation.mutateAsync(similarServices);
     };
 
     const proposeBusinessModel = async () => {
-        setLoading(true);
-        setIsLoading(true);
-        setError(null);
-
-        const headers = {
-            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
-            'Content-Type': 'application/json'
-        };
-
-        try {
-            const response = await api.post('/business-model/propose', JSON.stringify(analyzedBusinessModel), { headers });
-            setBusinessProposal(response.data);
-            setCurrentStep(4);
-        } catch (error) {
-            handleError('비즈니스 모델 제안에 실패했습니다', error);
-        } finally {
-            setLoading(false);
-            setIsLoading(false);
-        }
+        await proposeBusinessModelMutation.mutateAsync(analyzedBusinessModel);
     };
 
-    const handleError = (message, error) => {
-        console.error(message, error);
-        setError(`${message}: ${error.response?.data?.message || error.message}`);
+    const handleBusinessSelect = useCallback((event) => {
+        const selectedId = parseInt(event.target.value, 10);
+        const selected = businesses.find(b => b.id === selectedId);
+        if (selected) {
+            setSelectedBusiness(selected);
+            if (typeof onBusinessSelect === 'function') {
+                onBusinessSelect(selected);
+            }
+        }
+    }, [businesses, onBusinessSelect]);
+
+    const handleNewAnalysis = () => {
+        setSelectedBusiness(null);
+        setCurrentStep(1);
+        queryClient.removeQueries(['similarServices']);
+        queryClient.removeQueries(['analyzedBusinessModel']);
+        queryClient.removeQueries(['businessProposal']);
     };
 
     const renderStepIndicator = () => (
@@ -191,18 +166,6 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
             </HStack>
         </Box>
     );
-
-    const handleBusinessSelect = useCallback((event) => {
-        const selectedId = parseInt(event.target.value, 10);
-        const selected = businesses.find(b => b.id === selectedId);
-        console.log("Business selected:", selected);
-        if (selected) {
-            setSelectedBusiness(selected);
-            if (typeof onBusinessSelect === 'function') {
-                onBusinessSelect(selected);
-            }
-        }
-    }, [businesses, onBusinessSelect]);
 
     const renderBusinessSelection = () => (
         <Card>
@@ -293,7 +256,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={getSimilarServices}
-                    isLoading={loading}
+                    isLoading={similarServicesMutation.isPending}
                 >
                     다음 단계
                 </Button>
@@ -330,7 +293,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={analyzeBusinessModels}
-                    isLoading={loading}
+                    isLoading={analyzeBusinessModelMutation.isPending}
                 >
                     비즈니스 모델 분석
                 </Button>
@@ -352,7 +315,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                     mt={4}
                     colorScheme="blue"
                     onClick={proposeBusinessModel}
-                    isLoading={loading}
+                    isLoading={proposeBusinessModelMutation.isPending}
                 >
                     비즈니스 모델 제안
                 </Button>
@@ -415,14 +378,17 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
         </Modal>
     );
 
-    const handleNewAnalysis = () => {
-        setSelectedBusiness(null);
-        setSimilarServices([]);
-        setAnalyzedBusinessModel(null);
-        setBusinessProposal(null);
-        setCurrentStep(1);
-        setError(null);
-    };
+    const isLoading =
+        similarServicesMutation.isPending ||
+        analyzeBusinessModelMutation.isPending ||
+        proposeBusinessModelMutation.isPending;
+
+    const error =
+        isBusinessesError ||
+        isCategoriesError ||
+        similarServicesMutation.error ||
+        analyzeBusinessModelMutation.error ||
+        proposeBusinessModelMutation.error;
 
     return (
         <Box ref={businessModelRef} width="70%" margin="auto" pt={24} mb={12} minHeight="1000px">
@@ -438,7 +404,7 @@ const BusinessModel = ({ customData, onBusinessSelect, onCustomDataChange }) => 
                         {error && (
                             <Alert status="error">
                                 <AlertIcon />
-                                {error}
+                                {error.message}
                             </Alert>
                         )}
                         {currentStep === 1 && renderBusinessSelection()}
